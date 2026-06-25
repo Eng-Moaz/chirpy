@@ -49,9 +49,9 @@ func main(){
 	}
 
 	mu.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app",http.FileServer(http.Dir(".")))))
-	mu.HandleFunc("/healthz", handler)
-	mu.HandleFunc("/metrics", cfg.handlerMetricsWriter)
-	mu.HandleFunc("/reset", cfg.handlerMetricsReset)
+	mu.HandleFunc("GET /healthz", handler)
+	mu.HandleFunc("GET /metrics", cfg.handlerMetricsWriter)
+	mu.HandleFunc("POST /reset", cfg.handlerMetricsReset)
 
 	err := server.ListenAndServe()
 	if err != nil{
