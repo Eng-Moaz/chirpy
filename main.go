@@ -21,10 +21,15 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler{
 }
 
 func (cfg *apiConfig) handlerMetricsWriter(w http.ResponseWriter, r *http.Request){
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")	
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")	
 	w.WriteHeader(200)
 	serverHits := cfg.fileserverHits.Load()
-	msgToWrite := fmt.Sprintf("Hits: %v", serverHits)
+	msgToWrite := fmt.Sprintf(`<html>
+  	  <body>
+    	    <h1>Welcome, Chirpy Admin</h1>
+    	    <p>Chirpy has been visited %d times!</p>
+  	  </body>
+	</html>`, serverHits)
 	w.Write([]byte(msgToWrite))
 }
 
@@ -52,8 +57,8 @@ func main(){
 
 	mu.Handle("/app/", fsHandler)
 	mu.HandleFunc("GET /api/healthz", handler)
-	mu.HandleFunc("GET /api/metrics", apiCfg.handlerMetricsWriter)
-	mu.HandleFunc("POST /api/reset", apiCfg.handlerMetricsReset)
+	mu.HandleFunc("GET /admin/metrics", apiCfg.handlerMetricsWriter)
+	mu.HandleFunc("POST /admin/reset", apiCfg.handlerMetricsReset)
 
 	err := server.ListenAndServe()
 	if err != nil{
