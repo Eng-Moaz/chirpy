@@ -41,17 +41,19 @@ func handler(w http.ResponseWriter, r *http.Request){
 }
 
 func main(){
-	cfg := apiConfig{}
+	apiCfg := apiConfig{}
 	mu := http.NewServeMux()
 	server := &http.Server{
 		Handler: mu,
 		Addr: ":8080",
 	}
 
-	mu.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app",http.FileServer(http.Dir(".")))))
-	mu.HandleFunc("GET /healthz", handler)
-	mu.HandleFunc("GET /metrics", cfg.handlerMetricsWriter)
-	mu.HandleFunc("POST /reset", cfg.handlerMetricsReset)
+	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir("."))))
+
+	mu.Handle("/app/", fsHandler)
+	mu.HandleFunc("GET /api/healthz", handler)
+	mu.HandleFunc("GET /api/metrics", apiCfg.handlerMetricsWriter)
+	mu.HandleFunc("POST /api/reset", apiCfg.handlerMetricsReset)
 
 	err := server.ListenAndServe()
 	if err != nil{
