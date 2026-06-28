@@ -7,24 +7,27 @@ import (
 	"os"
 	"sync/atomic"
 
+	"github.com/Eng-Moaz/chirpy/internal/database"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/Eng-Moaz/chirpy/internal/databse"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
-	database *database.Queries
+	db *database.Queries
 }
 
 
 func main(){
+	godotenv.Load()
 	dbUrl := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil{
 		log.Fatal("Failed to open a database connection")
 	}
+	dbQueries := database.New(db)
 
-	apiCfg := apiConfig{database: db}
+	apiCfg := apiConfig{db: dbQueries}
 	mu := http.NewServeMux()
 	server := &http.Server{
 		Handler: mu,
