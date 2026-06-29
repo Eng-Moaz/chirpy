@@ -40,11 +40,12 @@ func main(){
 
 	mu.Handle("/app/", fsHandler)
 	mu.HandleFunc("GET /api/healthz", HandlerHealthz)
-	mu.HandleFunc("GET /admin/metrics", apiCfg.handlerMetricsWriter)
+	mu.HandleFunc("GET /admin/metrics", apiCfg.HandlerMetricsWriter)
 	mu.HandleFunc("POST /admin/reset", apiCfg.handlerMetricsReset)
 	mu.HandleFunc("POST /api/chirps", apiCfg.HandlerChirps)
 	mu.HandleFunc("POST /api/users", apiCfg.HandlerCreateUser)
 	mu.HandleFunc("GET /api/chirps", apiCfg.HandlerAllChirps)
+	mu.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.HandlerOneChirp)
 
 	err = server.ListenAndServe()
 	if err != nil{

@@ -14,7 +14,7 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler{
 	)
 }
 
-func (cfg *apiConfig) handlerMetricsWriter(w http.ResponseWriter, r *http.Request){
+func (cfg *apiConfig) HandlerMetricsWriter(w http.ResponseWriter, r *http.Request){
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")	
 	w.WriteHeader(200)
 	serverHits := cfg.fileserverHits.Load()
