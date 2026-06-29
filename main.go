@@ -44,6 +44,7 @@ func main(){
 	mu.HandleFunc("POST /admin/reset", apiCfg.handlerMetricsReset)
 	mu.HandleFunc("POST /api/chirps", apiCfg.HandlerChirps)
 	mu.HandleFunc("POST /api/users", apiCfg.HandlerCreateUser)
+	mu.HandleFunc("GET /api/chirps", apiCfg.HandlerAllChirps)
 
 	err = server.ListenAndServe()
 	if err != nil{

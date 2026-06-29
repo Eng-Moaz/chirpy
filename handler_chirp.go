@@ -9,6 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
+
+type Chirp struct{
+	ID uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body string `json:"body"`
+	UserId uuid.UUID `json:"user_id"`
+}
+
 func (cfg *apiConfig) HandlerChirps(w http.ResponseWriter, r *http.Request){
 	type parameters struct{
 		Body string `json:"body"`
@@ -38,13 +47,6 @@ func (cfg *apiConfig) HandlerChirps(w http.ResponseWriter, r *http.Request){
 	if err != nil{
 		respondWithError(w, 400, "Failed to create chirp")
 	}
-	type Chirp struct{
-		ID uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Body string `json:"body"`
-		UserId uuid.UUID `json:"user_id"`
-	}
 	respChirp := Chirp{
 		ID: chirp.ID,
 		CreatedAt: chirp.CreatedAt,
@@ -53,4 +55,25 @@ func (cfg *apiConfig) HandlerChirps(w http.ResponseWriter, r *http.Request){
 		UserId: chirp.UserID,
 	}
 	respondWithJson(w, 201, respChirp)
+}
+
+
+func (cfg *apiConfig) HandlerAllChirps(w http.ResponseWriter, r *http.Request){
+	chirps, err := cfg.db.GetAllChirps(r.Context())
+	if err != nil{
+		respondWithError(w, 400, "Failed to get chirps")
+	}
+	chirpsResponse := make([]Chirp, 0)
+
+	for _, chirp := range chirps{
+		curChirp := Chirp{
+			ID: chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body: chirp.Body,
+			UserId: chirp.UserID,
+		}
+		chirpsResponse = append(chirpsResponse, curChirp)
+	}
+	respondWithJson(w, 200, chirpsResponse)
 }
