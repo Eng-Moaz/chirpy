@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
 	"strings"
 )
 
@@ -26,26 +24,4 @@ func cleanProfanity(chirp string) string{
 		}	
 	}
 	return strings.Join(finalString, " ")
-}
-
-func HandlerValidateChirp(w http.ResponseWriter, r *http.Request){
-	type parameters struct{
-		Body string `json:"body"`
-	}
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil{
-		respondWithError(w, 400, "Something went wrong")
-	}
-	if len(params.Body) > 140{
-		respondWithError(w, 400, "Chirp is too long")
-	}else{
-		type respParameters struct{
-			CleanedBody string `json:"cleaned_body"`
-		}
-		respondWithJson(w, 200, respParameters{
-			CleanedBody: cleanProfanity(params.Body),},
-		)
-	}
 }
