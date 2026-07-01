@@ -15,11 +15,13 @@ type User struct{
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email string `json:"email"`
+	Token string `json:"token"`
 }
 
 type UserReceived struct{
 	Email string `json:"email"`
 	Password string `json:"password"`
+	ExpiresInSeconds *int `json:"expires_in_seconds"`
 }
 
 func (cfg *apiConfig)HandlerCreateUser(w http.ResponseWriter, r *http.Request){
@@ -84,11 +86,22 @@ func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+	expiresInSeconds := time.Hour * 1
+	if params.ExpiresInSeconds != nil && *params.ExpiresInSeconds >= (60 * 60){
+		expiresInSeconds = time.Duration(*params.ExpiresInSeconds)
+	}
+	secretString, err := auth.MakeJWT(userFromDB.ID, cfg.jwt, expiresInSeconds)
+	if err != nil{
+		respondWithError(w, 400, "Something went wrong")
+		return
+	}
+
 	userResp := User{
 		ID: userFromDB.ID,
 		CreatedAt: userFromDB.CreatedAt,
 		UpdatedAt: userFromDB.UpdatedAt,
 		Email: userFromDB.Email,
+		Token: secretString,
 	}
 	respondWithJson(w, 200, userResp)
 }

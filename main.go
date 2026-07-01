@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db *database.Queries
 	Platform string
+	jwt string
 }
 
 
@@ -28,8 +29,9 @@ func main(){
 	}
 	dbQueries := database.New(db)
 
+	jwt := os.Getenv("JWT")
 	platform := os.Getenv("PLATFORM")
-	apiCfg := apiConfig{db: dbQueries, Platform: platform}
+	apiCfg := apiConfig{db: dbQueries, Platform: platform, jwt: jwt}
 	mu := http.NewServeMux()
 	server := &http.Server{
 		Handler: mu,

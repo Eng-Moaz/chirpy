@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Eng-Moaz/chirpy/internal/auth"
 	"github.com/Eng-Moaz/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -23,12 +24,22 @@ func (cfg *apiConfig) HandlerChirps(w http.ResponseWriter, r *http.Request){
 		Body string `json:"body"`
 		UserId uuid.UUID `json:"user_id"`
 	}
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil{
+		respondWithError(w, 401, "Unauthorized")
+		return
+	}
 	
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil{
 		respondWithError(w, 400, "Something went wrong")
+		return
+	}
+	userTokenId, err := auth.ValidateJWT(token, cfg.jwt)
+	if err != nil{
+		respondWithError(w, 401, "Unauthorized")
 		return
 	}
 	if len(params.Body) > 140{
@@ -41,7 +52,7 @@ func (cfg *apiConfig) HandlerChirps(w http.ResponseWriter, r *http.Request){
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Body: cleanedBody,
-		UserID: params.UserId,
+		UserID: userTokenId,
 	}
 
 	chirp, err := cfg.db.CreateChirp(r.Context(), chirpParams)
