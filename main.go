@@ -49,6 +49,8 @@ func main(){
 	mu.HandleFunc("GET /api/chirps", apiCfg.HandlerAllChirps)
 	mu.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.HandlerOneChirp)
 	mu.HandleFunc("POST /api/login", apiCfg.HandlerLogin)
+	mu.HandleFunc("POST /api/refresh", apiCfg.HandlerRefresh)
+	mu.HandleFunc("POST /api/revoke", apiCfg.HandlerRevoke)
 
 	err = server.ListenAndServe()
 	if err != nil{

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -16,12 +18,12 @@ type User struct{
 	UpdatedAt time.Time `json:"updated_at"`
 	Email string `json:"email"`
 	Token string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type UserReceived struct{
 	Email string `json:"email"`
 	Password string `json:"password"`
-	ExpiresInSeconds *int `json:"expires_in_seconds"`
 }
 
 func (cfg *apiConfig)HandlerCreateUser(w http.ResponseWriter, r *http.Request){
@@ -58,6 +60,23 @@ func (cfg *apiConfig)HandlerCreateUser(w http.ResponseWriter, r *http.Request){
 	respondWithJson(w, 201, userResp)
 }
 
+func (cfg *apiConfig) createRefreshToken(r *http.Request, userID uuid.UUID) (string, error){
+	timeNow := time.Now()
+	params := database.CreateTokenParams{
+		Token: auth.MakeRefreshToken(),
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+		UserID: userID,
+		ExpiresAt: sql.NullTime{Time: timeNow.AddDate(0,0,60), Valid: true},
+		RevokedAt: sql.NullTime{Time: time.Time{}, Valid: false},
+	}
+	token, err := cfg.db.CreateToken(r.Context(), params)
+	if err != nil{
+		return "", fmt.Errorf("Failed to create token")
+	}
+	return token.Token, nil
+}
+
 func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request){
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
@@ -87,12 +106,14 @@ func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request){
 	}
 
 	expiresInSeconds := time.Hour * 1
-	if params.ExpiresInSeconds != nil && *params.ExpiresInSeconds >= (60 * 60){
-		expiresInSeconds = time.Duration(*params.ExpiresInSeconds)
-	}
 	secretString, err := auth.MakeJWT(userFromDB.ID, cfg.jwt, expiresInSeconds)
 	if err != nil{
 		respondWithError(w, 400, "Something went wrong")
+		return
+	}
+	refreshToken, err := cfg.createRefreshToken(r, userFromDB.ID)
+	if err != nil{
+		respondWithError(w, 400, "Failed to create token")
 		return
 	}
 
@@ -102,6 +123,7 @@ func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request){
 		UpdatedAt: userFromDB.UpdatedAt,
 		Email: userFromDB.Email,
 		Token: secretString,
+		RefreshToken: refreshToken,
 	}
 	respondWithJson(w, 200, userResp)
 }
